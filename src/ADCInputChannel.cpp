@@ -87,7 +87,7 @@ void ADCInputChannel::processInput()
                     //value.ladcValue = calculateSensorValueLinearFunction(ParamADC_CHGeradeM / 100.0, ParamADC_CHGeradeB / 100.0);
                     value.ladcValue = (ParamADC_CHGeradeM / 100.0)*getPinInputVoltage() + ParamADC_CHGeradeB / 100.0;
 #ifdef InputADC_Output
-                    SERIAL_PORT.print(value.ladcValue);
+                    SERIAL_PORT.print(getPinInputVoltage());
                     SERIAL_PORT.print(" | ");
                     SERIAL_PORT.print(ParamADC_CHGeradeM / 100.0);
                     SERIAL_PORT.print(" | ");
@@ -165,8 +165,8 @@ void ADCInputChannel::processInput()
             if (ParamADC_CHSMT50DPTType== 0)
             {
 #ifdef InputADC_Output
-                SERIAL_PORT.print("DPT5: ");
-                SERIAL_PORT.println(value.ladcValue);
+             //   SERIAL_PORT.print("DPT5: ");
+             //   SERIAL_PORT.println(value.ladcValue);
 #endif
                 KoADC_ChannelOutput.valueNoSend((uint8_t)(value.ladcValue * 2.55), DPT_Percent_U8);
             }
