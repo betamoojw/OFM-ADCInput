@@ -84,7 +84,8 @@ void ADCInputChannel::processInput()
 
                 default:
                     // STEP 2: Get new Sensor value
-                    value.ladcValue = calculateSensorValueLinearFunction(ParamADC_CHGeradeM / 100.0, ParamADC_CHGeradeB / 100.0);
+                    //value.ladcValue = calculateSensorValueLinearFunction(ParamADC_CHGeradeM / 100.0, ParamADC_CHGeradeB / 100.0);
+                    value.ladcValue = (ParamADC_CHGeradeM / 100.0)*getPinInputVoltage() + ParamADC_CHGeradeB / 100.0;
 #ifdef InputADC_Output
                     SERIAL_PORT.print(value.ladcValue);
                     SERIAL_PORT.print(" | ");
