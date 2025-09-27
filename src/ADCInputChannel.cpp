@@ -64,6 +64,9 @@ void ADCInputChannel::processInput()
     if (ParamADC_CHSensorType == 0)
         return;
 
+#ifdef InputADC_Output
+    std::string debugOut = ""; 
+#endif
     // Auswertung
     switch (ParamADC_CHSensorType)
     {
@@ -87,12 +90,9 @@ void ADCInputChannel::processInput()
                     //value.ladcValue = calculateSensorValueLinearFunction(ParamADC_CHGeradeM / 100.0, ParamADC_CHGeradeB / 100.0);
                     value.ladcValue = (ParamADC_CHGeradeM / 100.0)*getPinInputVoltage() + ParamADC_CHGeradeB / 100.0;
 #ifdef InputADC_Output
-                    SERIAL_PORT.print(getPinInputVoltage());
-                    SERIAL_PORT.print(" | ");
-                    SERIAL_PORT.print(ParamADC_CHGeradeM / 100.0);
-                    SERIAL_PORT.print(" | ");
-                    SERIAL_PORT.print(ParamADC_CHGeradeB / 100.0);
-                    SERIAL_PORT.print(" | ");
+                    debugOut = std::to_string(getPinInputVoltage()) + " | " +
+                               std::to_string(ParamADC_CHGeradeM / 100.0) + " | " +
+                               std::to_string(ParamADC_CHGeradeB / 100.0) + " | ";
 #endif
                     // STEP 3: Check value Change "Absolut"
                     lAbsolute = ParamADC_CHSendenAbsolut;
@@ -103,7 +103,7 @@ void ADCInputChannel::processInput()
             {
                 lSend = true;
 #ifdef InputADC_Output
-                SERIAL_PORT.print(" Abs ");
+                debugOut += " Abs ";
 #endif
             }
 
@@ -113,7 +113,7 @@ void ADCInputChannel::processInput()
             {
                 lSend = true;
 #ifdef InputADC_Output
-                SERIAL_PORT.print(" Rel ");
+                debugOut += " Rel ";
 #endif
             }
 
@@ -122,7 +122,7 @@ void ADCInputChannel::processInput()
             {
                 case SensorType_voltage: // DPT9.020 (mV)
 #ifdef InputADC_Output
-                    SERIAL_PORT.println(value.ladcValue);
+                    logDebugP("%s%i", debugOut.c_str(), value.ladcValue);
 #endif
 
                     // we always store the new value in KO, even it it is not sent (to satisfy potential read request)
@@ -130,7 +130,7 @@ void ADCInputChannel::processInput()
                     break;
                 case SensorType_percent:
 #ifdef InputADC_Output
-                    SERIAL_PORT.println(value.ladcValue);
+                    logDebugP("%s%i", debugOut.c_str(), value.ladcValue);
 #endif
                     // we always store the new value in KO, even it it is not sent (to satisfy potential read request)
                     KoADC_ChannelOutput.valueNoSend(value.ladcValue * 2.55, DPT_Percent_U8); //****************************************************** */
@@ -138,7 +138,7 @@ void ADCInputChannel::processInput()
 
                 default:
 #ifdef InputADC_Output
-                    SERIAL_PORT.println(value.ladcValue);
+                    logDebugP("%s%i", debugOut.c_str(), value.ladcValue);
 #endif
                     // we always store the new value in KO, even it it is not sent (to satisfy potential read request)
                     KoADC_ChannelOutput.valueNoSend(value.ladcValue, DPT_Value_Temp); //**************  DPT ???  ************ */
@@ -158,23 +158,21 @@ void ADCInputChannel::processInput()
             {
                 lSend = true;
 #ifdef InputADC_Output
-                SERIAL_PORT.print("Abs ");
+                debugOut = "Abs ";
 #endif
             }
             // we always store the new value in KO, even it it is not sent (to satisfy potential read request)
             if (ParamADC_CHSMT50DPTType== 0)
             {
 #ifdef InputADC_Output
-             //   SERIAL_PORT.print("DPT5: ");
-             //   SERIAL_PORT.println(value.ladcValue);
+             //   logDebugP("%sDPT5: %.3f", debugOut.c_str(), value.ladcValue);
 #endif
                 KoADC_ChannelOutput.valueNoSend((uint8_t)(value.ladcValue * 2.55), DPT_Percent_U8);
             }
             else
             {
 #ifdef InputADC_Output
-                SERIAL_PORT.print("DPT9: ");
-                SERIAL_PORT.println(value.ladcValue);
+                logDebugP("%sDPT9: %.3f", debugOut.c_str(), value.ladcValue);
 #endif
                 KoADC_ChannelOutput.valueNoSend(value.ladcValue, DPT_Value_Humidity);
             }
@@ -208,7 +206,7 @@ void ADCInputChannel::processInput()
 
         default:
 #ifdef InputADC_Output
-            SERIAL_PORT.print("Wrong ADC Type Parameter");
+            logDebugP("Wrong ADC Type Parameter");
 #endif
             break;
     }
@@ -266,16 +264,7 @@ void ADCInputChannel::processPeriodicSend()
 
 void ADCInputChannel::sendState()
 {
-
-    Serial.print("----> ADC_");
-    Serial.print(_channelIndex);
-    Serial.print(": ");
-    Serial.print(_adcValue);
-    Serial.print(": ");
-    Serial.println(getPinInputVoltage());
-
-    logDebugP("sendState: %i", _adcValue);
-
+    logDebugP("sendState: %i, voltage: %.3f", _adcValue, getPinInputVoltage());
     KoADC_ChannelOutput.objectWritten();
 }
 

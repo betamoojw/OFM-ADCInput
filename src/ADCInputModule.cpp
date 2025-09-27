@@ -30,8 +30,6 @@ void ADCInputModule::setup()
   OPENKNX_ADC_ADS_WIRE.setSCL(OPENKNX_ADC_ADS_SCL);
   OPENKNX_ADC_ADS_WIRE.begin();  
   
-  Serial.print("  ADS1115:");
-  
   I2CADS1115.begin();
   if (I2CADS1115.isConnected()) {
     // I2C_adc.setGain(GAIN_TWOTHIRDS);  // 2/3x gain +/- 6.144V  1 bit = 3mV
@@ -43,9 +41,9 @@ void ADCInputModule::setup()
     // 0.125mV
     I2CADS1115.setGain(OPENKNX_ADC_ADS_GAIN);
     // ADC_to_voltage_factor = ADS1115_TOP.toVoltage(); //  voltage factor
-    Serial.println(" run");
+    logInfoP("Analog-Input successfully initialized");
   } else {
-    Serial.println(" ERROR");
+    logInfoP("Analog-Input could not be initialized (hardware ADS1115 missing?)");
   }
 
 
@@ -88,7 +86,7 @@ void ADCInputModule::processInput() {
       I2CADS1115.requestADC(3); // CH4  > liegt auch ADC4
       break;
     default:
-      Serial.println("Wrong StateADC TOP CH");
+      logDebugP("Wrong StateADC TOP CH");
       break;
     }
     ADC_State = Read;
@@ -117,7 +115,7 @@ void ADCInputModule::processInput() {
         break;
 
       default:
-        Serial.println("Wrong StateADC TOP CH");
+        logDebugP("Wrong StateADC TOP CH");
         break;
       }
       ADC_State = Set;
@@ -125,7 +123,7 @@ void ADCInputModule::processInput() {
     break;
 
   default:
-    Serial.println("Wrong StateADC TOP");
+    logDebugP("Wrong StateADC TOP");
     break;
   }
 }
