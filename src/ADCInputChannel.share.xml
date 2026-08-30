@@ -2,7 +2,7 @@
 <?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
 
-  <op:config name="%ADC_NumChannelsDefault%" value="4" />
+  <op:config name="%ADC_NumChannelsDefault%" value="2" />
 
   <ManufacturerData>
     <Manufacturer>
@@ -28,11 +28,20 @@
               <ParameterType Id="%AID%_PT-ADCValueWORD" Name="ADCValueWORD">
                 <TypeNumber SizeInBit="16" Type="signedInt" minInclusive="0" maxInclusive="30000" />
               </ParameterType>
+              <ParameterType Id="%AID%_PT-ADCValueInt32" Name="ADCValueInt32">
+                <TypeNumber SizeInBit="32" Type="unsignedInt" minInclusive="0" maxInclusive="50000000" />
+              </ParameterType>
               <ParameterType Id="%AID%_PT-ADCValueI16" Name="ADCValueI16">
                 <TypeNumber SizeInBit="16" Type="signedInt" minInclusive="-30000" maxInclusive="30000" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-ADCPercentage" Name="ADCPercentage">
                 <TypeNumber SizeInBit="8" Type="signedInt" minInclusive="0" maxInclusive="100" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ADCHwVersion" Name="ADCHwVersion">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Text="HW4.2 (0-12V)" Value="0" Id="%ENID%" />
+                  <Enumeration Text="HW4.2 (0-8V)" Value="1" Id="%ENID%" />
+                </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-ADCSensorCalc" Name="ADCSensorCalc">
                 <TypeRestriction Base="Value" SizeInBit="8">
@@ -40,6 +49,8 @@
                   <Enumeration Text="ADC-Wert (mV)" Value="1" Id="%ENID%" />
                   <Enumeration Text="SMT50-Feuchte" Value="2" Id="%ENID%" />
                   <Enumeration Text="SMT50-Temp" Value="3" Id="%ENID%" />
+                  <Enumeration Text="4-20mA" Value="150" Id="%ENID%" />
+                  <Enumeration Text="4-20mA - Füllstand(TL-136)" Value="151" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-ADCInputdividor" Name="ADCInputdividor">
@@ -69,27 +80,46 @@
                   <Enumeration Text="Prozent (%)" Value="9" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
+              <ParameterType Id="%AID%_PT-ADCSensorTypeStrom" Name="ADCSensorTypeStrom">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Text="Strom (mA)" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Temperatur (°C)" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Feuchte (%)" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Druck (Pa)" Value="5" Id="%ENID%" />
+                  <Enumeration Text="Strömung (l/h)" Value="6" Id="%ENID%" />
+                  <Enumeration Text="Windgeschwindigkeit (m/s)" Value="8" Id="%ENID%" />
+                  <Enumeration Text="Prozent (%)" Value="9" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
               <ParameterType Id="%AID%_PT-SMT50DptType" Name="SMT50DptType">
                 <TypeRestriction Base="Value" SizeInBit="1">
                   <Enumeration Text="DPT5" Value="0" Id="%ENID%" />
                   <Enumeration Text="DPT9" Value="1" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
+              <ParameterType Id="%AID%_PT-FuellstandMessbereich" Name="FuellstandMessbereich">
+                <TypeNumber SizeInBit="4" Type="unsignedInt" minInclusive="1" maxInclusive="15" />
+              </ParameterType>
             </ParameterTypes>
             <Parameters>
               <Parameter Id="%AID%_P-%TT%00001" Name="VisibleChannels" ParameterType="%AID%_PT-ADCNumChannels" Text="Verfügbare Kanäle" Value="%ADC_NumChannelsDefault%" SuffixText=" von %N%" />
+              <Union SizeInBit="8">
+                <Memory CodeSegment="%AID%_RS-04-00000" Offset="0" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00002" Name="ADCHwVersion" Offset="0" BitOffset="0" ParameterType="%AID%_PT-ADCHwVersion" Text="Wähle HW-Version" Value="0" />
+              </Union>
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
+              <ParameterRef Id="%AID%_UP-%TT%00002_R-%TT%0000201" RefId="%AID%_UP-%TT%00002" />
             </ParameterRefs>
           </Static>
           <Dynamic>
-              <Channel Id="%AID%_CH-%PREFIX%" Name="Standard" Number="%PREFIX%" Text="Analogeingänge" Icon="alpha-v-circle-outline">
+            <Channel Id="%AID%_CH-%PREFIX%" Name="Standard" Number="%PREFIX%" Text="Analogeingänge" Icon="alpha-v-circle-outline">
               <ParameterBlock Id="%AID%_PB-nnn" Name="ADC" Text="Allgemein" Icon="cog-outline" HelpContext="ADC-Dokumentation" ShowInComObjectTree="true">
                 <!-- Version -->
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Analogeingänge" UIHint="Headline" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Version: %ModuleVersion%" />
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" /> 
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
 
                 <!-- Verfuegbare-Kanaele -->
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Kanalauswahl" UIHint="Headline" />
@@ -107,6 +137,9 @@
                 </ParameterBlock>
                 <op:include href="ADCInputChannel.templ.xml" xpath="//Dynamic/ChannelIndependentBlock/*"
                   type="template" prefix="ADC" IsInner="true" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Auswahl Hardware" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00002_R-%TT%0000201" IndentLevel="1" HelpContext="ADC-HW-Version" />
               </ParameterBlock>
             </Channel>
           </Dynamic>

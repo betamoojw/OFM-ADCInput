@@ -1,6 +1,9 @@
 #pragma once
 #include "OpenKNX.h"
 
+#define HW42_0_12V 0
+#define HW42_0_8V 1
+
 class ADCInputChannel : public OpenKNX::Channel
 {
 
@@ -8,21 +11,35 @@ class ADCInputChannel : public OpenKNX::Channel
     void processInput();
     void processPeriodicSend();
     void sendState();
-    float calculateSensorValueLinearFunction( float a, float b);
-    float getPinInputVoltage();   // Voltage in mV
+    void sendState2();
+    void sendState3();
+    void brokenCableDetection(float value);
+    float calculateSensorValueLinearFunction(float a, float b);
+    float calculateSensorValueLinearFunctionCur(float a, float b);
+    float getPinInputVoltage(); // Voltage in mV
+    float getPinInputCurrent(); // Voltage in mA
     float checkZero(float value);
 
     union InputADCValuesOLD
     {
-    float ladcValue;
-    // uint16_t ladcValueU16[ADC_ChannelCount];
-    // uint8_t lsoilmoistureU8[ADC_ChannelCount];
-   } valueOld;
+        float ladcValue;
+        // uint16_t ladcValueU16[ADC_ChannelCount];
+        // uint8_t lsoilmoistureU8[ADC_ChannelCount];
+    } valueOld;
+
+    uint8_t value2;     // Value Füllstandsensor Prozent
+    uint8_t valueOld2;  // Value Füllstandsensor Prozent
+    uint16_t value3;    // Value Füllhöhe in mm
+    uint16_t valueOld3; // Value Füllhöhe in mm
 
     uint8_t _channelIndex;
     long _adcValue;
+    bool _hasFirstValue = false;
+    bool _cableBroken = false;
 
     uint32_t _lastPeriodicSend = 0;
+    uint32_t _lastPeriodicSend2 = 0;
+    uint32_t _lastPeriodicSend3 = 0;
 
     /*
     bool _paramActive;
@@ -37,7 +54,7 @@ class ADCInputChannel : public OpenKNX::Channel
     int8_t _currentHardwareState = -1;
 
     uint32_t _lastDebounceTime = 0;
-    
+
     */
 
   public:
@@ -46,9 +63,9 @@ class ADCInputChannel : public OpenKNX::Channel
     void setup() override;
     void loop() override;
     const std::string name() override;
-    
+
     void getADC_value(long value);
 
-    //void setHardwareState(bool state);
+    // void setHardwareState(bool state);
     bool isActive();
 };

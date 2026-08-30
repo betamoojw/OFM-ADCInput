@@ -28,6 +28,5 @@ Hier kann der Wert angegeben werden, bei welcher Wertänderung gesendet werden s
 ### senden bei relativer Abweichung
 Hier kann der Prozentwert angegeben werden, bei welcher Abweichung gesendet werden soll.
 
-### Wert glätten: P = 
-NICHT IMPLEMENTIERT !!!
+
 
