@@ -28,6 +28,9 @@
               <ParameterType Id="%AID%_PT-ADCValueWORD" Name="ADCValueWORD">
                 <TypeNumber SizeInBit="16" Type="signedInt" minInclusive="0" maxInclusive="30000" />
               </ParameterType>
+              <ParameterType Id="%AID%_PT-ADCCorrection" Name="ADCCorrection">
+                <TypeNumber SizeInBit="16" Type="signedInt" minInclusive="1" maxInclusive="30000" />
+              </ParameterType>
               <ParameterType Id="%AID%_PT-ADCValueInt32" Name="ADCValueInt32">
                 <TypeNumber SizeInBit="32" Type="unsignedInt" minInclusive="0" maxInclusive="50000000" />
               </ParameterType>
@@ -156,4 +159,4 @@
       </Baggages>
     </Manufacturer>
   </ManufacturerData>
-</KNX>
+</KNX>

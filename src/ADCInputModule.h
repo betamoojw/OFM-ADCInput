@@ -1,10 +1,11 @@
+#pragma once
 #include "ADCInputChannel.h"
 #include "OpenKNX/Module.h"
 #include "hardware.h"
 #include "ADS1X15.h"
 
 
-#define AS1115_MAX_CH 4
+#define ADS1115_MAX_CH 4
 
 
 class ADCInputModule : public OpenKNX::Module
@@ -17,14 +18,12 @@ class ADCInputModule : public OpenKNX::Module
     void setup() override;
 
   private:
-    void processHardwareInputs();
     void processInput();
-  
-    long adc_Value[AS1115_MAX_CH] = {1}; 
-    uint32_t _lastPollingTime = 0;
 
-    ADCInputChannel* _channels[AS1115_MAX_CH];
+    uint32_t _lastPollingTime = 0;
+    bool _adcAvailable = false;
+
+    ADCInputChannel* _channels[ADS1115_MAX_CH] = {};
 };
 
 extern ADCInputModule openknxADCInputModule;
-

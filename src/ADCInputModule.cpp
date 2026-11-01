@@ -2,6 +2,8 @@
 
 #if defined(OPENKNX_ADC_ADS_WIRE) && defined(OPENKNX_ADC_ADS_ADDR) && defined(OPENKNX_ADC_ADS_SDA) && defined(OPENKNX_ADC_ADS_SCL) && defined(OPENKNX_ADC_ADS_GAIN) && ADC_ChannelCount > 0
 
+#define ADC_USED_CHANNELS MIN(ADC_ChannelCount, ADS1115_MAX_CH)
+
 ADS1115 I2CADS1115(OPENKNX_ADC_ADS_ADDR, &OPENKNX_ADC_ADS_WIRE);
 
 enum State
@@ -11,14 +13,8 @@ enum State
 };
 State ADC_State = Set;
 
-enum ADC_enum_CH
-{
-    ADC_1,
-    ADC_2,
-    ADC_3,
-    ADC_4,
-};
-ADC_enum_CH ADC_CH = ADC_1;
+// index of the ADS1115 input that is currently measured
+uint8_t ADC_CH = 0;
 
 const std::string ADCInputModule::name() { return "ADCInput"; }
 
@@ -47,6 +43,7 @@ void ADCInputModule::setup()
         // 0.125mV
         I2CADS1115.setGain(OPENKNX_ADC_ADS_GAIN);
         // ADC_to_voltage_factor = ADS1115_TOP.toVoltage(); //  voltage factor
+        _adcAvailable = true;
         logInfoP("Analog-Input successfully initialized");
     }
     else
@@ -54,7 +51,7 @@ void ADCInputModule::setup()
         logInfoP("Analog-Input could not be initialized (hardware ADS1115 missing?)");
     }
 
-    for (uint8_t i = 0; i < MIN(ADC_ChannelCount, AS1115_MAX_CH); i++)
+    for (uint8_t i = 0; i < ADC_USED_CHANNELS; i++)
     {
         _channels[i] = new ADCInputChannel(i);
         _channels[i]->setup();
@@ -63,6 +60,9 @@ void ADCInputModule::setup()
 
 void ADCInputModule::loop()
 {
+    // without ADS1115 there are no valid measurements
+    if (!_adcAvailable)
+        return;
 
     if (delayCheck(_lastPollingTime, 100))
     {
@@ -70,7 +70,7 @@ void ADCInputModule::loop()
 
         processInput();
 
-        for (uint8_t i = 0; i < MIN(ADC_ChannelCount, AS1115_MAX_CH); i++)
+        for (uint8_t i = 0; i < ADC_USED_CHANNELS; i++)
             _channels[i]->loop();
     }
 }
@@ -83,61 +83,22 @@ void ADCInputModule::processInput()
     switch (ADC_State)
     {
         case Set:
-            switch (ADC_CH)
-            {
-                case ADC_1:
-                    I2CADS1115.requestADC(0); //  CH1 -> liegt auch ADC1
-                    break;
-                case ADC_2:
-                    I2CADS1115.requestADC(1); //  CH2 -> liegt auch ADC2
-                    break;
-                case ADC_3:
-                    I2CADS1115.requestADC(2); //  CH3 -> liegt auch ADC3
-                    break;
-                case ADC_4:
-                    I2CADS1115.requestADC(3); // CH4  > liegt auch ADC4
-                    break;
-                default:
-                    logDebugP("Wrong StateADC TOP CH");
-                    break;
-            }
+            I2CADS1115.requestADC(ADC_CH); // ADS1115 input ADC_CH -> channel ADC_CH
             ADC_State = Read;
             break;
 
         case Read:
             if (I2CADS1115.isBusy() == false)
             {
-                switch (ADC_CH)
-                {
-                    case ADC_1: // CH1
-                        _channels[0]->getADC_value(I2CADS1115.getValue());
-                        ADC_CH = ADC_2;
-                        break;
-                    case ADC_2: // CH2
-                        _channels[1]->getADC_value(I2CADS1115.getValue());
-                        ADC_CH = ADC_3;
-                        break;
-                    case ADC_3: // CH3
-                        _channels[2]->getADC_value(I2CADS1115.getValue());
-                        ADC_CH = ADC_4;
-                        break;
-                    case ADC_4: // HSS
-                        _channels[3]->getADC_value(I2CADS1115.getValue());
-                        ADC_CH = ADC_1;
-                        ADC_State = Set; // Needed because of the Return true
-                        // return true;
-                        break;
-
-                    default:
-                        logDebugP("Wrong StateADC TOP CH");
-                        break;
-                }
+                _channels[ADC_CH]->getADC_value(I2CADS1115.getValue());
+                ADC_CH = (ADC_CH + 1) % ADC_USED_CHANNELS;
                 ADC_State = Set;
             }
             break;
 
         default:
             logDebugP("Wrong StateADC TOP");
+            ADC_State = Set;
             break;
     }
 }
