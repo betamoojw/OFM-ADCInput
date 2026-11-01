@@ -26,7 +26,7 @@
                 <Parameter Id="%AID%_UP-%TT%%CC%006" Name="CH%C%VoltageDiv"
                   Offset="7" BitOffset="0" ParameterType="%AID%_PT-ADCInputdividor" Text="Eingangsspannungsbereich" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%007" Name="CH%C%VoltageCorrection"
-                  Offset="8" BitOffset="0" ParameterType="%AID%_PT-ADCValueWORD" Text="Korrekturfaktor" Value="100" />
+                  Offset="8" BitOffset="0" ParameterType="%AID%_PT-ADCCorrection" Text="Korrekturfaktor" Value="100" />
                 <Parameter Id="%AID%_UP-%TT%%CC%008" Name="CH%C%SensorTypes"
                   Offset="10" BitOffset="0" ParameterType="%AID%_PT-ADCSensorType" Text="Meßwerteinheit (KO)" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%%CC%009" Name="CH%C%GeradeM"
@@ -510,4 +510,4 @@
       </ApplicationPrograms>
     </Manufacturer>
   </ManufacturerData>
-</KNX>
+</KNX>

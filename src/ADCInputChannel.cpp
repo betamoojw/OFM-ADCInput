@@ -124,7 +124,7 @@ void ADCInputChannel::processInput()
             // STEP 3b: Check if Change detected
             lAbsolute = ParamADC_CHSendenRelativ;
             absValue = abs(value.ladcValue);
-            if (lAbsolute > 0 && (((absValue / 100.0 * lAbsolute) > 0.0005) || absValue == 0) && (abs(value.ladcValue - valueOld.ladcValue)) > value.ladcValue / 100.0 * lAbsolute)
+            if (lAbsolute > 0 && (((absValue / 100.0 * lAbsolute) > 0.0005) || absValue == 0) && (abs(value.ladcValue - valueOld.ladcValue)) > absValue / 100.0 * lAbsolute)
             {
                 lSend = true;
                 logDebugP("REL");
@@ -135,7 +135,7 @@ void ADCInputChannel::processInput()
             {
                 case SensorType_voltage: // DPT9.020 (mV)
 #ifdef InputADC_Output
-                    logDebugP("mV: %s%i", debugOut.c_str(), value.ladcValue);
+                    logDebugP("mV: %s%.3f", debugOut.c_str(), value.ladcValue);
 #endif
 
                     // we always store the new value in KO, even it it is not sent (to satisfy potential read request)
@@ -143,15 +143,15 @@ void ADCInputChannel::processInput()
                     break;
                 case SensorType_percent:
 #ifdef InputADC_Output
-                    logDebugP("prozent: %s%i", debugOut.c_str(), value.ladcValue);
+                    logDebugP("prozent: %s%.3f", debugOut.c_str(), value.ladcValue);
 #endif
                     // we always store the new value in KO, even it it is not sent (to satisfy potential read request)
-                    KoADC_ChannelOutput.valueNoSend(value.ladcValue * 2.55, DPT_Percent_U8); //****************************************************** */
+                    KoADC_ChannelOutput.valueNoSend(value.ladcValue, DPT_Percent_U8);
                     break;
 
                 default:
 #ifdef InputADC_Output
-                    logDebugP("default: %s%i", debugOut.c_str(), value.ladcValue);
+                    logDebugP("default: %s%.3f", debugOut.c_str(), value.ladcValue);
 #endif
                     // we always store the new value in KO, even it it is not sent (to satisfy potential read request)
                     KoADC_ChannelOutput.valueNoSend(value.ladcValue, DPT_Value_Temp); //**************  DPT ???  ************ */
@@ -180,7 +180,7 @@ void ADCInputChannel::processInput()
 #ifdef InputADC_Output
                 //   logDebugP("%sDPT5: %.3f", debugOut.c_str(), value.ladcValue);
 #endif
-                KoADC_ChannelOutput.valueNoSend((uint8_t)(value.ladcValue * 2.55), DPT_Percent_U8);
+                KoADC_ChannelOutput.valueNoSend((uint8_t)value.ladcValue, DPT_Percent_U8);
             }
             else
             {
@@ -270,7 +270,7 @@ void ADCInputChannel::processInput()
 
             // STEP 3b: Check if Change detected "Relativ"
             lAbsolute = ParamADC_CHSendenRelativ;
-            if (lAbsolute > 0 && (abs(value.ladcValue - valueOld.ladcValue)) >= value.ladcValue / 100 * lAbsolute)
+            if (lAbsolute > 0 && (abs(value.ladcValue - valueOld.ladcValue)) > abs(value.ladcValue) / 100 * lAbsolute)
             {
                 lSend = true;
                 logDebugP("Senden: rel");
@@ -315,7 +315,7 @@ void ADCInputChannel::processInput()
 
             // STEP 3b: Check if Change detected
             lAbsolute = ParamADC_CHSendenRelativ;
-            if (lAbsolute > 0 && (abs(value.ladcValue - valueOld.ladcValue)) >= value.ladcValue / 100 * lAbsolute)
+            if (lAbsolute > 0 && (abs(value.ladcValue - valueOld.ladcValue)) > abs(value.ladcValue) / 100 * lAbsolute)
             {
                 lSend = true;
                 logDebugP("Send: REL");
@@ -348,10 +348,7 @@ void ADCInputChannel::processInput()
             break;
 
         default:
-#ifdef InputADC_Output
-            v
-#endif
-                break;
+            break;
     }
 
     // first run - send initial value once, instead of waiting for the next cycle/change
@@ -382,17 +379,21 @@ void ADCInputChannel::processInput()
         logDebugP("send zyklisch");
         lSend = true;
     }
-    if (delayCheck(_lastPeriodicSend2, ParamADC_CHSendcycletime2 * 1000) && ParamADC_CHSendcycletime2 != 0)
+    // KO A/B and their parameters only exist for the level sensor
+    if (ParamADC_CHSensorType == ADC_4_20mA_Fuellstand)
     {
-        _lastPeriodicSend2 = millis();
-        logDebugP("send2 zyklisch");
-        lSend2 = true;
-    }
-    if (delayCheck(_lastPeriodicSend3, ParamADC_CHSendcycletime3 * 1000) && ParamADC_CHSendcycletime3 != 0)
-    {
-        _lastPeriodicSend3 = millis();
-        logDebugP("send3 zyklisch");
-        lSend3 = true;
+        if (delayCheck(_lastPeriodicSend2, ParamADC_CHSendcycletime2 * 1000) && ParamADC_CHSendcycletime2 != 0)
+        {
+            _lastPeriodicSend2 = millis();
+            logDebugP("send2 zyklisch");
+            lSend2 = true;
+        }
+        if (delayCheck(_lastPeriodicSend3, ParamADC_CHSendcycletime3 * 1000) && ParamADC_CHSendcycletime3 != 0)
+        {
+            _lastPeriodicSend3 = millis();
+            logDebugP("send3 zyklisch");
+            lSend3 = true;
+        }
     }
 
     if (lSend)
@@ -425,14 +426,20 @@ void ADCInputChannel::getADC_value(long value)
 
 void ADCInputChannel::brokenCableDetection(float value)
 {
-    if (value <= 2 && _cableBroken == false)
+    // first run - always send the initial state
+    if (_cableState == -1)
     {
-        _cableBroken = true;
+        _cableState = (value <= 2) ? 1 : 0;
+        KoADC_CableDetection.value(_cableState == 1, Dpt(1, 2));
+    }
+    else if (value <= 2 && _cableState == 0)
+    {
+        _cableState = 1;
         KoADC_CableDetection.value(true, Dpt(1, 2));
     }
-    else if (value > 3 && _cableBroken == true)
+    else if (value > 3 && _cableState == 1)
     {
-        _cableBroken = false;
+        _cableState = 0;
         KoADC_CableDetection.value(false, Dpt(1, 2));
     }
 }
@@ -462,19 +469,19 @@ void ADCInputChannel::processPeriodicSend()
 
 void ADCInputChannel::sendState()
 {
-    logDebugP("sendState: %i, voltage: %.3f", _adcValue, getPinInputVoltage());
+    logDebugP("sendState: %ld, voltage: %.3f", _adcValue, getPinInputVoltage());
     KoADC_ChannelOutput.objectWritten();
 }
 
 void ADCInputChannel::sendState2()
 {
-    logDebugP("sendState2: %i, voltage: %.3f", _adcValue, getPinInputVoltage());
+    logDebugP("sendState2: %ld, voltage: %.3f", _adcValue, getPinInputVoltage());
     KoADC_ChannelOutputA.objectWritten();
 }
 
 void ADCInputChannel::sendState3()
 {
-    logDebugP("sendStat3e: %i, voltage: %.3f", _adcValue, getPinInputVoltage());
+    logDebugP("sendState3: %ld, voltage: %.3f", _adcValue, getPinInputVoltage());
     KoADC_ChannelOutputB.objectWritten();
 }
 
@@ -525,4 +532,4 @@ float ADCInputChannel::checkZero(float value)
         return value;
     else
         return 0;
-}
+}

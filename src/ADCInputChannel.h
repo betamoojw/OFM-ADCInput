@@ -35,7 +35,7 @@ class ADCInputChannel : public OpenKNX::Channel
     uint8_t _channelIndex;
     long _adcValue;
     bool _hasFirstValue = false;
-    bool _cableBroken = false;
+    int8_t _cableState = -1; // -1 = unknown, 0 = ok, 1 = broken
 
     uint32_t _lastPeriodicSend = 0;
     uint32_t _lastPeriodicSend2 = 0;
